@@ -25,7 +25,7 @@ app.use("/auth",LoginRoute);
 app.use("/api",checkAuthToken,credentialsRoute);
 
 app.listen(PORT,()=>{
-    console.log(`Sevrer Started at ${PORT}`)
+    console.log(`Server Started at ${PORT}`)
 })
 
 

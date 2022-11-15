@@ -1,4 +1,4 @@
-const {TrinsicService,AccountService,LoginRequest, IssueFromTemplateRequest,InsertItemRequest} = require("@trinsic/trinsic");
+const {TrinsicService,AccountService,LoginRequest, IssueFromTemplateRequest,InsertItemRequest, SignInRequest,CredentialService, SendRequest} = require("@trinsic/trinsic");
 const ecosystemId = "urn:trinsic:ecosystems:Liquid";
 const trinsic =  new TrinsicService();
 
@@ -6,6 +6,29 @@ const trinsic =  new TrinsicService();
 exports.addAuthToken = async (authToken)=>{
   trinsic.setAuthToken(authToken);
 }
+
+exports.SignUp = async (email,name,mobile)=>{
+    try{
+  let signUpResonse =   await trinsic.account().signIn(SignInRequest.fromPartial({
+       details:{
+        email:email,
+        name:name,
+        sms:mobile,
+       },
+       ecosystemId:ecosystemId
+    }))
+  
+    return signUpResonse
+}catch(err){
+    throw err.message;
+}
+}
+
+exports.verifySignUpOTP = async (data,otp)=>{
+   let response = await AccountService.unprotect(data,otp);
+   return response;
+}
+
 
 exports.getInfo = async ()=>{
  return trinsic.account().info();
@@ -20,6 +43,7 @@ exports.sendOTP = async (email)=>{
     let loginResponse = await trinsic.account().login(
         LoginRequest.fromPartial({
             email: email,
+            ecosystemId:ecosystemId
         })
     );
  
@@ -36,22 +60,21 @@ exports.VerifyOTP = async (challenge , otp)=>{
     }
 }
 
-exports.createCredential = async (data)=>{
+exports.createCredential = async (userAuth,email,data)=>{
     try{
-    trinsic.setAuthToken(processe.env.AUTHTOKEN)
-    let request = IssueFromTemplateRequest.fromPartial({
+    let request = await IssueFromTemplateRequest.fromPartial({
         templateId: "urn:template:Liquid:did",
         valuesJson: JSON.stringify(data),
     });
     
     let issueResponse = await trinsic.credential().issueFromTemplate(request);
-    trinsic.setAuthToken(req.session.authToken);
-    const insertResponse = await trinsic.wallet().insertItem(
-        InsertItemRequest.fromPartial({
-            itemJson: issueResponse.documentJson,
-        }));
-    return insertResponse;
+    console.log(issueResponse)
+    let response = await trinsic.credential().send({
+        email:email,
+        documentJson:issueResponse.documentJson
+    })
+    return issueResponse.documentJson;
     }catch(err){
-        throw err.message;
+        return err;
     }
 }
