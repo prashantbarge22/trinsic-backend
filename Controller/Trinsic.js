@@ -1,8 +1,10 @@
 const Trinsic = require("../Service/Trinsic");
-
+const utils = require("../utils/utils")
 exports.getAllDid = async (req, res) => {
     try {
         let result = await Trinsic.searchDid();
+        let arr = await utils.ArrayOfStringToJSON(result.items);
+        result.items = arr;
         res.send({ data: result, error: "" });
     } catch (err) {
         res.send({ data: "", error: err.message })
@@ -31,7 +33,7 @@ exports.VerifyOTP = async (req, res) => {
     try {
         let challenge = new Buffer.from(req.session.challenge);
         let otp = req.body.otp;
-        const authToken = await Trinsic.VerifyOTP(challenge,otp)
+        const authToken = await Trinsic.VerifyOTP(challenge, otp)
         req.session.authToken = authToken;
         Trinsic.addAuthToken(authToken);
         res.send({ data: "Authorized", error: "" })
@@ -40,54 +42,74 @@ exports.VerifyOTP = async (req, res) => {
     }
 }
 
-exports.createCredential = async (req,res)=>{
-   try{ 
-  let userAuth = req.session.authToken;
-  let email = req.body.email;
-  let data = {
-    Name:"Prashant Barge"
-  }
-   let insertResponse = await Trinsic.createCredential(userAuth,email,data);
-   res.send({data:insertResponse,error:""})
-}catch(err){
-    throw err.message;
-}
-}
-
-exports.getAccountInfo = async (req,res)=>{
- try{
-    let info = await Trinsic.getInfo();
-    
-    res.send({data:info,token:req.session.authToken,error:""})
- }catch(err){
-    res.send({ data: "", error: err.message })
- }
+exports.createCredential = async (req, res) => {
+    try {
+        let userAuth = req.session.authToken;
+        let email = req.body.email;
+        let data = {
+            Name: "Prashant Barge"
+        }
+        let insertResponse = await Trinsic.createCredential(userAuth, email, data);
+        res.send({ data: insertResponse, error: "" })
+    } catch (err) {
+        throw err.message;
+    }
 }
 
-exports.SignUp = async (req,res)=>{
- try{
-    let name = req.body.name;
-    let mobile = req.body.mobile;
-    let email = req.body.email;
-    let loginResonse = await Trinsic.SignUp(email,name,mobile);
-    req.session.authToken = loginResonse.data;
-    res.send({ data: loginResonse, error: ""})
+exports.getAccountInfo = async (req, res) => {
+    try {
+        let info = await Trinsic.getInfo();
 
- }catch(err){
-    res.send({ data: "", error: err.message })
- }
+        res.send({ data: info, token: req.session.authToken, error: "" })
+    } catch (err) {
+        res.send({ data: "", error: err.message })
+    }
 }
 
-exports.VerifySignUpOTP = async (req,res)=>{
-    try{
-        
+exports.SignUp = async (req, res) => {
+    try {
+        let name = req.body.name;
+        let mobile = req.body.mobile;
+        let email = req.body.email;
+        let loginResonse = await Trinsic.SignUp(email, name, mobile);
+        req.session.authToken = loginResonse.data;
+        res.send({ data: loginResonse, error: "" })
+
+    } catch (err) {
+        res.send({ data: "", error: err.message })
+    }
+}
+
+exports.VerifySignUpOTP = async (req, res) => {
+    try {
+
         let data = req.body.data;
         let otp = req.body.otp;
-        let result = await Trinsic.verifySignUpOTP(data,otp);
+        let result = await Trinsic.verifySignUpOTP(data, otp);
         req.session.authToken = result;
         Trinsic.addAuthToken(result);
-        res.send({ data: result, error: ""})
-     }catch(err){
+        res.send({ data: result, error: "" })
+    } catch (err) {
         res.send({ data: "", error: err.message })
-     }
+    }
 }
+
+exports.createProof = async (req, res) => {
+    try {
+        let itemId = req.body.itemId;
+        let proof = await Trinsic.createProof(itemId);
+        res.send({ data: JSON.parse(proof.proofDocumentJson), error: false });
+    } catch (err) {
+        res.send({ data: "", error: err.message })
+    }
+}
+
+exports.verifyProof = async (req, res) => {
+    try {
+        let proof = JSON.stringify(req.body.proof);
+        let response = await Trinsic.verifyProof(proof);
+        res.send({ data: response, error: "" });
+    } catch (err) {
+        res.send({ data: "", error: err.message })
+    }
+} 
